@@ -38,22 +38,22 @@ def predict_instrument(audio_features):
 # ---------------------------------------------------------
 st.header("📁 Upload Audio File")
 
-uploaded_file = st.file_uploader(
-    "Upload .wav or .mp3 file",
-    type=["wav", "mp3"]
-)
+uploaded_file = st.file_uploader("Upload .wav or .mp3 file", type=["wav", "mp3"])
 
 if uploaded_file is not None:
     st.success("Audio uploaded successfully!")
 
-    # Preprocess uploaded file → MFCC → scaled features
-    features = prepare_features(uploaded_file)
+    predict_file = st.button("🎯 Predict Uploaded Audio")
 
-    # Predict instrument
-    prediction = predict_instrument(features)
+    if predict_file:
+        features = prepare_features(uploaded_file)
+        prediction = predict_instrument(features)
 
-    st.subheader("🎯 Predicted Instrument")
-    st.write(f"**{prediction}**")
+        st.markdown(
+            f"<h2 style='color:#4CAF50; text-align:center;'>🎯 The detected instrument is: <b>{prediction}</b></h2>",
+            unsafe_allow_html=True
+        )
+
 
 
 # ---------------------------------------------------------
@@ -66,20 +66,29 @@ audio_bytes = st.audio_input("Click below to record audio")
 if audio_bytes is not None:
     st.success("Live audio recorded successfully!")
 
-    # Convert bytes → numpy audio using soundfile
-    audio_np, sr = sf.read(io.BytesIO(audio_bytes))
+    predict_record = st.button("🎯 Predict Recorded Audio")
 
-    # librosa expects float32
-    audio_np = audio_np.astype(np.float32)
+    if predict_record:
+        try:
+            # Safest way to decode audio
+            audio_file = io.BytesIO(audio_bytes)
+            audio_np, sr = sf.read(audio_file, dtype="float32", always_2d=False)
 
-    # Preprocess → MFCC → scaled
-    features = prepare_features(io.BytesIO(audio_bytes))
+            # Preprocess through your pipeline
+            features = prepare_features(io.BytesIO(audio_bytes))
 
-    # Predict
-    prediction = predict_instrument(features)
+            # Predict
+            prediction = predict_instrument(features)
 
-    st.subheader("🎯 Predicted Instrument")
-    st.write(f"**{prediction}**")
+            # Beautiful output
+            st.markdown(
+                f"<h2 style='color:#4CAF50; text-align:center;'>🎯 The detected instrument is: <b>{prediction}</b></h2>",
+                unsafe_allow_html=True
+            )
+
+        except Exception as e:
+            st.error("⚠ Unable to process recorded audio. Please try again.")
+            st.exception(e)
 
 
 # Footer
