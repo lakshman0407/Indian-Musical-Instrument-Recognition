@@ -4,108 +4,88 @@ import librosa
 import soundfile as sf
 import joblib
 import io
-
+import tempfile
 from utils.preprocess import prepare_features
 
-# -------------------------------------------
-# Page Configuration
-# -------------------------------------------
-st.set_page_config(
-    page_title="Indian Musical Instrument Classifier",
-    layout="centered"
-)
+# ---------------------------------------------------
+# Page Setup
+# ---------------------------------------------------
+st.set_page_config(page_title="Indian Musical Instrument Classifier")
 
-st.title("🎵 Indian Musical Instrument Classification")
-st.write("Upload audio (.wav /.mp3) or record live audio to predict the instrument.")
+st.title("🎵 Indian Musical Instrument Recognition")
+st.write("Upload an audio file or record audio for instrument classification.")
 
-# -------------------------------------------
-# Load Saved Models
-# -------------------------------------------
+# ---------------------------------------------------
+# Load Model + Encoder
+# ---------------------------------------------------
 model = joblib.load("models/random_forest_model.pkl")
 label_encoder = joblib.load("models/label_encoder.pkl")
 
-# -------------------------------------------
-# Prediction Function
-# -------------------------------------------
-def predict_instrument(audio_features):
-    pred_class = model.predict(audio_features)[0]
-    instrument_name = label_encoder.inverse_transform([pred_class])[0]
-    return instrument_name
+# ---------------------------------------------------
+# Predict Function
+# ---------------------------------------------------
+def predict_instrument(features):
+    pred = model.predict(features)[0]
+    return label_encoder.inverse_transform([pred])[0]
 
-
-# ---------------------------------------------------------
-# BLOCK 1 — FILE UPLOAD
-# ---------------------------------------------------------
+# ---------------------------------------------------
+# FILE UPLOAD SECTION
+# ---------------------------------------------------
 st.header("📁 Upload Audio File")
 
-uploaded_file = st.file_uploader("Upload .wav or .mp3 file", type=["wav", "mp3"])
+uploaded = st.file_uploader("Upload .wav or .mp3", type=["wav", "mp3"])
 
-if uploaded_file is not None:
-    st.success("Audio uploaded successfully!")
+if uploaded:
+    st.success("File uploaded!")
 
-    predict_file = st.button("🎯 Predict Uploaded Audio")
-
-    if predict_file:
-        features = prepare_features(uploaded_file)
-        prediction = predict_instrument(features)
+    if st.button("🎯 Predict Uploaded File"):
+        features = prepare_features(uploaded)
+        result = predict_instrument(features)
 
         st.markdown(
             f"""
             <h2 style='text-align:center;'>
-                🎯 <span style='color:#FF5733;'>Predicted Instrument:</span> 
-                <span style='color:#008000;'><b>{prediction}</b></span>
+            🎯 <span style='color:#FF5733;'>Predicted Instrument:</span> 
+            <b><span style='color:#008000;'>{result}</span></b>
             </h2>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
+# ---------------------------------------------------
+# LIVE AUDIO RECORDING SECTION
+# ---------------------------------------------------
+st.header("🎙️ Live Audio Recording")
 
+audio_bytes = st.audio_input("Record here:")
 
+if audio_bytes:
+    st.success("Audio recorded!")
 
-# ---------------------------------------------------------
-# BLOCK 2 — LIVE AUDIO RECORDING
-# ---------------------------------------------------------
-st.header("🎙️ Record Live Audio")
-
-audio_bytes = st.audio_input("Click below to record audio")
-
-if audio_bytes is not None:
-    st.success("Live audio recorded successfully!")
-
-    predict_record = st.button("🎯 Predict Recorded Audio")
-
-    if predict_record:
-
+    if st.button("🎯 Predict Recorded Audio"):
         try:
-            # Convert UploadedFile → bytes → io buffer
-            audio_file = io.BytesIO(audio_bytes.read())
+            # Save recorded bytes into a temporary WAV file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
+                temp_audio.write(audio_bytes.read())
+                temp_path = temp_audio.name
 
-            # Decode using soundfile
-            audio_np, sr = sf.read(audio_file, dtype="float32", always_2d=False)
-
-            # Preprocess → MFCC
-            features = prepare_features(io.BytesIO(audio_bytes.read()))
+            # Preprocess using your correct MFCC pipeline
+            features = prepare_features(temp_path)
 
             # Predict
-            prediction = predict_instrument(features)
+            result = predict_instrument(features)
 
-            # Colorful, big output
+            # Output
             st.markdown(
                 f"""
                 <h2 style='text-align:center;'>
-                    🎯 <span style='color:#FF5733;'>Predicted Instrument:</span> 
-                    <span style='color:#008000;'><b>{prediction}</b></span>
+                🎯 <span style='color:#FF5733;'>Predicted Instrument:</span> 
+                <b><span style='color:#008000;'>{result}</span></b>
                 </h2>
                 """,
                 unsafe_allow_html=True
             )
 
         except Exception as e:
-            st.error("⚠ Unable to process recorded audio.")
+            st.error("⚠ Could not process recorded audio.")
             st.write(e)
-
-
-
-# Footer
-st.markdown("---")
-st.write("Built with ❤️ for Indian Music Classification")
