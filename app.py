@@ -34,7 +34,7 @@ def predict_instrument(audio_features):
 
 
 # ---------------------------------------------------------
-# BLOCK 1 — FILE UPLOAD (WAV / MP3)
+# BLOCK 1 — FILE UPLOAD
 # ---------------------------------------------------------
 st.header("📁 Upload Audio File")
 
@@ -50,9 +50,15 @@ if uploaded_file is not None:
         prediction = predict_instrument(features)
 
         st.markdown(
-            f"<h2 style='color:#4CAF50; text-align:center;'>🎯 The detected instrument is: <b>{prediction}</b></h2>",
+            f"""
+            <h2 style='text-align:center;'>
+                🎯 <span style='color:#FF5733;'>Predicted Instrument:</span> 
+                <span style='color:#008000;'><b>{prediction}</b></span>
+            </h2>
+            """,
             unsafe_allow_html=True
         )
+
 
 
 
@@ -69,26 +75,35 @@ if audio_bytes is not None:
     predict_record = st.button("🎯 Predict Recorded Audio")
 
     if predict_record:
+
         try:
-            # Safest way to decode audio
-            audio_file = io.BytesIO(audio_bytes)
+            # Convert UploadedFile → bytes → io buffer
+            audio_file = io.BytesIO(audio_bytes.read())
+
+            # Decode using soundfile
             audio_np, sr = sf.read(audio_file, dtype="float32", always_2d=False)
 
-            # Preprocess through your pipeline
-            features = prepare_features(io.BytesIO(audio_bytes))
+            # Preprocess → MFCC
+            features = prepare_features(io.BytesIO(audio_bytes.read()))
 
             # Predict
             prediction = predict_instrument(features)
 
-            # Beautiful output
+            # Colorful, big output
             st.markdown(
-                f"<h2 style='color:#4CAF50; text-align:center;'>🎯 The detected instrument is: <b>{prediction}</b></h2>",
+                f"""
+                <h2 style='text-align:center;'>
+                    🎯 <span style='color:#FF5733;'>Predicted Instrument:</span> 
+                    <span style='color:#008000;'><b>{prediction}</b></span>
+                </h2>
+                """,
                 unsafe_allow_html=True
             )
 
         except Exception as e:
-            st.error("⚠ Unable to process recorded audio. Please try again.")
-            st.exception(e)
+            st.error("⚠ Unable to process recorded audio.")
+            st.write(e)
+
 
 
 # Footer
