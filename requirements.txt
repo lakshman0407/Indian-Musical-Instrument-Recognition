@@ -5,4 +5,4 @@ scikit-learn
 soundfile
 joblib
 matplotlib
-tensorflow-cpu==2.15.0
+tflite-runtime
