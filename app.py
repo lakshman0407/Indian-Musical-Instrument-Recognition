@@ -95,7 +95,7 @@ st.header("🎙️ Live Audio Recording")
 audio_bytes = st.audio_input("Record here:")
 
 if audio_bytes:
-st.success("Audio recorded!")
+    st.success("Audio recorded!")
 
 if st.button("🎯 Predict Recorded Audio"):
         try:
