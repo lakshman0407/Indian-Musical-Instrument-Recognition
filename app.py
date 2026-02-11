@@ -63,7 +63,7 @@ st.header("📁 Upload Audio File")
 uploaded = st.file_uploader("Upload .wav or .mp3", type=["wav", "mp3"])
 
 if uploaded:
-st.success("File uploaded!")
+    st.success("File uploaded!")
 
 if st.button("🎯 Predict Uploaded File"):
         features = prepare_features(uploaded)
