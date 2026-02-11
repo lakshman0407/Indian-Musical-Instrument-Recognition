@@ -5,4 +5,3 @@ scikit-learn
 soundfile
 joblib
 matplotlib
-tflite-runtime
