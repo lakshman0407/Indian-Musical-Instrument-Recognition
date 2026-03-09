@@ -99,7 +99,7 @@ if uploaded:
                 st.markdown(
                     f"""
                     <div class="result-box">
-                    🎯 Predicted Instrument <br><br>
+                    🎯 Predicted Instrument <br>
                     <span style="color:#00FFAA;font-weight:bold">{result}</span>
                     </div>
                     """,
