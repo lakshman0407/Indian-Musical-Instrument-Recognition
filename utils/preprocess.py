@@ -1,15 +1,26 @@
 import librosa
 import numpy as np
 import joblib
-import os
+import io
 
 DESIRED_DURATION = 30  # seconds
 
 # Load scaler
 scaler = joblib.load("models/scaler.pkl")
 
-def load_audio(file_path):
-    audio, sr = librosa.load(file_path, sr=None)
+
+def load_audio(file):
+    """
+    Accepts either:
+    - file path
+    - uploaded file object from Streamlit
+    """
+
+    if isinstance(file, str):
+        audio, sr = librosa.load(file, sr=None)
+    else:
+        audio_bytes = file.read()
+        audio, sr = librosa.load(io.BytesIO(audio_bytes), sr=None)
 
     # Silence removal
     audio, _ = librosa.effects.trim(audio, top_db=20)
@@ -32,9 +43,10 @@ def trim_pad_audio(audio, sr):
 
 
 def extract_mfcc(audio, sr, n_mfcc=13):
+
     window_size_sec = 0.025
     n_fft = int(sr * window_size_sec)
-    hop_length = n_fft   # no overlap
+    hop_length = n_fft
 
     mfcc = librosa.feature.mfcc(
         y=audio,
@@ -47,11 +59,12 @@ def extract_mfcc(audio, sr, n_mfcc=13):
     return mfcc.flatten()
 
 
-def prepare_features(file_path):
-    # Load
-    audio, sr = load_audio(file_path)
+def prepare_features(file):
 
-    # Trim/pad
+    # Load audio
+    audio, sr = load_audio(file)
+
+    # Trim or pad
     audio = trim_pad_audio(audio, sr)
 
     # Extract MFCC
