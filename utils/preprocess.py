@@ -58,19 +58,22 @@ def extract_mfcc(audio, sr, n_mfcc=13):
 
     return mfcc.flatten()
 
+EXPECTED_FEATURES = 15613
 
 def prepare_features(file):
 
-    # Load audio
     audio, sr = load_audio(file)
 
-    # Trim or pad
     audio = trim_pad_audio(audio, sr)
 
-    # Extract MFCC
     mfcc_flat = extract_mfcc(audio, sr)
 
-    # Scale
+    # Fix feature size mismatch
+    if len(mfcc_flat) > EXPECTED_FEATURES:
+        mfcc_flat = mfcc_flat[:EXPECTED_FEATURES]
+    else:
+        mfcc_flat = np.pad(mfcc_flat, (0, EXPECTED_FEATURES - len(mfcc_flat)))
+
     mfcc_scaled = scaler.transform([mfcc_flat])
 
     return mfcc_scaled
